@@ -1,0 +1,3 @@
+C:/Users/ekelc/GolandProjects/sdlTest/cmake-build-debug/CMakeFiles/sdlTest.dir
+C:/Users/ekelc/GolandProjects/sdlTest/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/ekelc/GolandProjects/sdlTest/cmake-build-debug/CMakeFiles/rebuild_cache.dir
