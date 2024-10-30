@@ -1,4 +1,0 @@
-C:\Users\ekelc\AppData\Local\JetBrains\Toolbox\apps\CLion-Nova\ch-0\241.10756\bin\cmake\win\x64\bin\cmake.exe -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=C:/Users/ekelc/AppData/Local/JetBrains/Toolbox/apps/CLion-Nova/ch-0/241.10756/bin/ninja/win/x64/ninja.exe -G Ninja -S C:\Users\ekelc\GolandProjects\sdlTest -B C:\Users\ekelc\GolandProjects\sdlTest\cmake-build-debug
--- Configuring done (0.1s)
--- Generating done (0.0s)
--- Build files have been written to: C:/Users/ekelc/GolandProjects/sdlTest/cmake-build-debug

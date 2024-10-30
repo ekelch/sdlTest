@@ -1,0 +1,3 @@
+/Users/evankelch/Programming/sdlTest/CMakeFiles/sdlTest.dir
+/Users/evankelch/Programming/sdlTest/CMakeFiles/edit_cache.dir
+/Users/evankelch/Programming/sdlTest/CMakeFiles/rebuild_cache.dir
