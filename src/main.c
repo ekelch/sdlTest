@@ -34,6 +34,10 @@ int main(int argc, char *argv[]) {
         printf("Failed to init");
         return 0;
     }
+    if (!loadMedia()) {
+        printf("Failed to load media");
+        return 0;
+    }
     while (!quit) {
         // 0 -> nothing in queue
         while (SDL_PollEvent(&e) != 0) {
