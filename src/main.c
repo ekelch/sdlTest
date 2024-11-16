@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
         }
 
         SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0);
-        SDL_RenderPresent(gRenderer);
+        SDL_RenderClear(gRenderer);
 
         backTexture.render(0, 0, &backTexture);
         fooTexture.render(100, 100, &fooTexture);
@@ -156,7 +156,8 @@ bool loadTexture(char *path, LTexture *this) {
         printf("Unable to create texture from %s!\nSDL_image Error: %s\n", path, IMG_GetError());
         return false;
     }
-
+    this->w = loadedSurface->w;
+    this->h = loadedSurface->h;
     SDL_FreeSurface(loadedSurface);
     return true;
 }
