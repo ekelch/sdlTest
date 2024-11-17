@@ -23,21 +23,18 @@ typedef struct LTexture{
     int h;
 
     bool (*loadTexture)(char* path, struct LTexture *this);
-    void (*render)(int x, int y, struct LTexture *this);
+    void (*render)(int x, int y, SDL_Rect* clip, struct LTexture *this);
     void (*free)(struct LTexture *this);
 } LTexture;
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 SDL_Event e;
-
-bool loadTexture(char *path, LTexture* lTexture);
-void renderTexture(int x, int y, struct LTexture *l);
-void freeTexture(struct LTexture *l);
 LTexture* newTexture();
 
-LTexture fooTexture;
-LTexture backTexture;
+#define NUM_SPRITES 4
+SDL_Rect gSpriteClips[NUM_SPRITES];
+LTexture gSpriteSheet;
 
 bool init();
 bool loadMedia();
@@ -65,8 +62,14 @@ int main(int argc, char *argv[]) {
         SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0);
         SDL_RenderClear(gRenderer);
 
-        backTexture.render(0, 0, &backTexture);
-        fooTexture.render(100, 100, &fooTexture);
+        for (int i = 0; i < NUM_SPRITES; i++) {
+            gSpriteSheet.render(
+                (i % 2) * (SCREEN_WIDTH - gSpriteClips[i].w),
+                (i / 2) * (SCREEN_HEIGHT - gSpriteClips[i].h),
+                &gSpriteClips[i],
+                &gSpriteSheet
+            );
+        }
 
         SDL_RenderPresent(gRenderer);
     }
@@ -85,7 +88,6 @@ bool init() {
         printf("Failed to create renderer!\nSDL_Error: %s\n", SDL_GetError());
         return false;
     }
-    SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
     int imgFlags = IMG_INIT_PNG;
     if (!(IMG_Init(imgFlags) && imgFlags)) {
         printf("SDL Image could not be initialized!\nSDL_image Error: %s\n", IMG_GetError());
@@ -96,23 +98,22 @@ bool init() {
 
 // load texture into gTexture
 bool loadMedia() {
-    fooTexture = *newTexture();
-    if (!fooTexture.loadTexture("resources/foo.png", &fooTexture)) {
-        printf("Failed to load foo!\n");
+    gSpriteSheet = *newTexture();
+    if (!gSpriteSheet.loadTexture("resources/sprites.png", &gSpriteSheet)) {
+        printf("Failed to load full sprite sheet!\n%s\n", IMG_GetError());
         return false;
     }
-
-    backTexture = *newTexture();
-    if (!backTexture.loadTexture("resources/background.png", &backTexture)) {
-        printf("Failed to load background!\n");
-        return false;
+    for (int i = 0; i < NUM_SPRITES; i++) {
+        gSpriteClips[i].x = i % 2 * 100;
+        gSpriteClips[i].y = i / 2 * 100;
+        gSpriteClips[i].w = 100;
+        gSpriteClips[i].h = 100;
     }
     return true;
 }
 
 void close() {
-    fooTexture.free(&fooTexture);
-    backTexture.free(&backTexture);
+
 
     SDL_DestroyRenderer(gRenderer);
     gRenderer = NULL;
@@ -124,22 +125,7 @@ void close() {
 }
 
 //LTexture
-
-LTexture* newTexture() {
-    LTexture *lt = malloc(sizeof(LTexture));
-    lt->texture = NULL;
-    lt->w = 0;
-    lt->h = 0;
-    lt->loadTexture = loadTexture;
-    lt->render = renderTexture;
-    lt->free = freeTexture;
-    return lt;
-}
-
-
-// Render texture at x,y coords
 bool loadTexture(char *path, LTexture *this) {
-
     // Load image at path
     SDL_Surface* loadedSurface = IMG_Load(path);
     if (loadedSurface == NULL) {
@@ -162,9 +148,13 @@ bool loadTexture(char *path, LTexture *this) {
     return true;
 }
 
-void renderTexture(int x, int y, struct LTexture *this) {
+void renderTexture(int x, int y, SDL_Rect* clip, struct LTexture *this) {
     SDL_Rect renderQuad = {x, y, this->w, this->h};
-    SDL_RenderCopy(gRenderer, this->texture, NULL, &renderQuad);
+    if (clip != NULL) {
+        renderQuad.w = clip->w;
+        renderQuad.h = clip->h;
+    }
+    SDL_RenderCopy(gRenderer, this->texture, clip, &renderQuad);
 }
 
 void freeTexture(struct LTexture *this) {
@@ -174,5 +164,15 @@ void freeTexture(struct LTexture *this) {
         this->w = 0;
         this->h = 0;
     }
+}
+LTexture* newTexture() {
+    LTexture *lt = malloc(sizeof(LTexture));
+    lt->texture = NULL;
+    lt->w = 0;
+    lt->h = 0;
+    lt->loadTexture = loadTexture;
+    lt->render = renderTexture;
+    lt->free = freeTexture;
+    return lt;
 }
 //LTexture
