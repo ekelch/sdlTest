@@ -1,3 +1,4 @@
+#include "SDL_blendmode.h"
 #include "SDL_error.h"
 #include "SDL_events.h"
 #include "SDL_image.h"
@@ -24,6 +25,8 @@ typedef struct LTexture{
 
     bool (*loadTexture)(char* path, struct LTexture *this);
     void (*setColor)(Uint8 r, Uint8 g, Uint8 b, struct LTexture *this);
+    void (*setBlendMode)(SDL_BlendMode mode, struct LTexture *this);
+    void (*setAlpha)(Uint8 a, struct LTexture* this);
     void (*render)(int x, int y, SDL_Rect* clip, struct LTexture *this);
     void (*free)(struct LTexture *this);
 } LTexture;
@@ -33,14 +36,14 @@ SDL_Renderer* gRenderer = NULL;
 SDL_Event e;
 LTexture* newTexture();
 
-#define NUM_SPRITES 4
-SDL_Rect gSpriteClips[NUM_SPRITES];
-LTexture gSpriteSheet;
+LTexture gFoo;
+LTexture gBackground;
 
 //mod components
 Uint8 r = 255;
 Uint8 g = 255;
 Uint8 b = 255;
+Uint8 a = 255;
 
 bool init();
 bool loadMedia();
@@ -82,22 +85,33 @@ int main(int argc, char *argv[]) {
                     case SDLK_d:
                         b -= 32;
                         break;
+                    case SDLK_r:
+                        if (a + 10 > 255) {
+                            a = 255;
+                        } else {
+                            a += 10;
+                        }
+                        break;
+                    case SDLK_f:
+                        if (a - 10 < 0) {
+                            a = 0;
+                        } else {
+                            a -= 10;
+                        }
+                        break;
                 }
             }
         }
 
         SDL_SetRenderDrawColor(gRenderer, 1, 1, 1, 1);
         SDL_RenderClear(gRenderer);
-        gSpriteSheet.setColor(r, g, b, &gSpriteSheet);
 
-        for (int i = 0; i < NUM_SPRITES; i++) {
-            gSpriteSheet.render(
-                (i % 2) * (SCREEN_WIDTH - gSpriteClips[i].w),
-                (i / 2) * (SCREEN_HEIGHT - gSpriteClips[i].h),
-                &gSpriteClips[i],
-                &gSpriteSheet
-            );
-        }
+        gBackground.setColor(r, g, b, &gBackground);
+        gFoo.setAlpha(a, &gFoo);
+        gFoo.render(0, 0, NULL, &gFoo);
+
+        gBackground.render(0, 0, NULL, &gBackground);
+        gFoo.render(100, 195, NULL, &gFoo);
 
         SDL_RenderPresent(gRenderer);
     }
@@ -126,22 +140,27 @@ bool init() {
 
 // load texture into gTexture
 bool loadMedia() {
-    gSpriteSheet = *newTexture();
-    if (!gSpriteSheet.loadTexture("resources/sprites.png", &gSpriteSheet)) {
-        printf("Failed to load full sprite sheet!\n%s\n", IMG_GetError());
+    gFoo = *newTexture();
+    if (!gFoo.loadTexture("resources/foo.png", &gFoo)) {
+        printf("Failed to load foo!\n%s\n", IMG_GetError());
         return false;
     }
-    for (int i = 0; i < NUM_SPRITES; i++) {
-        gSpriteClips[i].x = i % 2 * 100;
-        gSpriteClips[i].y = i / 2 * 100;
-        gSpriteClips[i].w = 100;
-        gSpriteClips[i].h = 100;
+
+    gBackground = *newTexture();
+    if (!gBackground.loadTexture("resources/background.png", &gBackground)) {
+        printf("Failed to load background!\n%s\n", IMG_GetError());
+        return false;
     }
+
+    gFoo.setBlendMode(SDL_BLENDMODE_BLEND, &gFoo);
+
     return true;
 }
 
 void close() {
-    gSpriteSheet.free(&gSpriteSheet);
+    gFoo.free(&gFoo);
+    gBackground.free(&gBackground);
+
     SDL_DestroyRenderer(gRenderer);
     gRenderer = NULL;
     SDL_DestroyWindow(gWindow);
@@ -197,6 +216,14 @@ void setColor(Uint8 r, Uint8 g, Uint8 b, struct LTexture *this) {
     SDL_SetTextureColorMod(this->texture, r, g, b);
 }
 
+void setBlendMode(SDL_BlendMode blendMode, LTexture *this) {
+    SDL_SetTextureBlendMode(this->texture, blendMode);
+}
+
+void setAlpha(Uint8 a, LTexture *this) {
+    SDL_SetTextureAlphaMod(this->texture, a);
+}
+
 LTexture* newTexture() {
     LTexture *lt = malloc(sizeof(LTexture));
     lt->texture = NULL;
@@ -204,6 +231,8 @@ LTexture* newTexture() {
     lt->h = 0;
     lt->loadTexture = loadTexture;
     lt->setColor = setColor;
+    lt->setBlendMode = setBlendMode;
+    lt->setAlpha = setAlpha;
     lt->render = renderTexture;
     lt->free = freeTexture;
     return lt;

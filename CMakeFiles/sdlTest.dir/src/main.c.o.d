@@ -1,5 +1,8 @@
 CMakeFiles/sdlTest.dir/src/main.c.o: \
   /Users/evankelch/Programming/sdlTest/src/main.c \
+  /opt/homebrew/include/SDL2/SDL_blendmode.h \
+  /opt/homebrew/include/SDL2/begin_code.h \
+  /opt/homebrew/include/SDL2/close_code.h \
   /opt/homebrew/include/SDL2/SDL_error.h \
   /opt/homebrew/include/SDL2/SDL_stdinc.h \
   /opt/homebrew/include/SDL2/SDL_config.h \
@@ -10,8 +13,6 @@ CMakeFiles/sdlTest.dir/src/main.c.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/AvailabilityInternal.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/AvailabilityInternalLegacy.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/TargetConditionals.h \
-  /opt/homebrew/include/SDL2/begin_code.h \
-  /opt/homebrew/include/SDL2/close_code.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/sys/types.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/sys/appleapiopts.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/sys/cdefs.h \
@@ -154,7 +155,6 @@ CMakeFiles/sdlTest.dir/src/main.c.o: \
   /opt/homebrew/include/SDL2/SDL_rect.h \
   /opt/homebrew/include/SDL2/SDL_rwops.h \
   /opt/homebrew/include/SDL2/SDL_surface.h \
-  /opt/homebrew/include/SDL2/SDL_blendmode.h \
   /opt/homebrew/include/SDL2/SDL_keyboard.h \
   /opt/homebrew/include/SDL2/SDL_keycode.h \
   /opt/homebrew/include/SDL2/SDL_scancode.h \
