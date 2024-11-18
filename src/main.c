@@ -36,8 +36,14 @@ SDL_Renderer* gRenderer = NULL;
 SDL_Event e;
 LTexture* newTexture();
 
-LTexture gFoo;
 LTexture gBackground;
+//anime
+const int ANIME_NUM_FRAMES = 4;
+LTexture gAnimeSprite;
+SDL_Rect gAnimeClips[ANIME_NUM_FRAMES];
+int frame = 0;
+int frameBuffer = 0;
+//anime
 
 //mod components
 Uint8 r = 255;
@@ -107,13 +113,23 @@ int main(int argc, char *argv[]) {
         SDL_RenderClear(gRenderer);
 
         gBackground.setColor(r, g, b, &gBackground);
-        gFoo.setAlpha(a, &gFoo);
-        gFoo.render(0, 0, NULL, &gFoo);
-
         gBackground.render(0, 0, NULL, &gBackground);
-        gFoo.render(100, 195, NULL, &gFoo);
+
+        SDL_Rect *currentClip = &gAnimeClips[frame / 4];
+        gAnimeSprite.render(120, 195, currentClip, &gAnimeSprite);
 
         SDL_RenderPresent(gRenderer);
+
+        //Go to next frame
+        if (++frameBuffer % 3 == 0) {
+            frameBuffer = 0;
+            ++frame;
+        }
+
+        //Cycle animation
+        if(frame / ANIME_NUM_FRAMES >= ANIME_NUM_FRAMES) {
+            frame = 0;
+        }
     }
 
     return 0;
@@ -125,7 +141,7 @@ bool init() {
         printf("Failed to create window!\nSDL_Error: %s\n", SDL_GetError());
         return false;
     }
-    gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+    gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED |  SDL_RENDERER_PRESENTVSYNC);
     if (gRenderer == NULL) {
         printf("Failed to create renderer!\nSDL_Error: %s\n", SDL_GetError());
         return false;
@@ -140,10 +156,16 @@ bool init() {
 
 // load texture into gTexture
 bool loadMedia() {
-    gFoo = *newTexture();
-    if (!gFoo.loadTexture("resources/foo.png", &gFoo)) {
+    gAnimeSprite = *newTexture();
+    if (!gAnimeSprite.loadTexture("resources/anime.png", &gAnimeSprite)) {
         printf("Failed to load foo!\n%s\n", IMG_GetError());
         return false;
+    }
+    for (int i = 0; i < ANIME_NUM_FRAMES; i++) {
+        gAnimeClips[i].x = 64 * i;
+        gAnimeClips[i].y = 0;
+        gAnimeClips[i].w = 64 ;
+        gAnimeClips[i].h = 205;
     }
 
     gBackground = *newTexture();
@@ -152,13 +174,13 @@ bool loadMedia() {
         return false;
     }
 
-    gFoo.setBlendMode(SDL_BLENDMODE_BLEND, &gFoo);
+    gAnimeSprite.setBlendMode(SDL_BLENDMODE_BLEND, &gAnimeSprite);
 
     return true;
 }
 
 void close() {
-    gFoo.free(&gFoo);
+    gAnimeSprite.free(&gAnimeSprite);
     gBackground.free(&gBackground);
 
     SDL_DestroyRenderer(gRenderer);
