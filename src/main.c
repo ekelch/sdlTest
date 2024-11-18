@@ -23,6 +23,7 @@ typedef struct LTexture{
     int h;
 
     bool (*loadTexture)(char* path, struct LTexture *this);
+    void (*setColor)(Uint8 r, Uint8 g, Uint8 b, struct LTexture *this);
     void (*render)(int x, int y, SDL_Rect* clip, struct LTexture *this);
     void (*free)(struct LTexture *this);
 } LTexture;
@@ -35,6 +36,11 @@ LTexture* newTexture();
 #define NUM_SPRITES 4
 SDL_Rect gSpriteClips[NUM_SPRITES];
 LTexture gSpriteSheet;
+
+//mod components
+Uint8 r = 255;
+Uint8 g = 255;
+Uint8 b = 255;
 
 bool init();
 bool loadMedia();
@@ -56,11 +62,33 @@ int main(int argc, char *argv[]) {
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
                 quit = true;
+            } else if (e.type == SDL_KEYDOWN) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_q:
+                        r += 32;
+                        break;
+                    case SDLK_w:
+                        g += 32;
+                        break;
+                    case SDLK_e:
+                        b += 32;
+                        break;
+                    case SDLK_a:
+                        r -= 32;
+                        break;
+                    case SDLK_s:
+                        g -= 32;
+                        break;
+                    case SDLK_d:
+                        b -= 32;
+                        break;
+                }
             }
         }
 
-        SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0);
+        SDL_SetRenderDrawColor(gRenderer, 1, 1, 1, 1);
         SDL_RenderClear(gRenderer);
+        gSpriteSheet.setColor(r, g, b, &gSpriteSheet);
 
         for (int i = 0; i < NUM_SPRITES; i++) {
             gSpriteSheet.render(
@@ -113,8 +141,7 @@ bool loadMedia() {
 }
 
 void close() {
-
-
+    gSpriteSheet.free(&gSpriteSheet);
     SDL_DestroyRenderer(gRenderer);
     gRenderer = NULL;
     SDL_DestroyWindow(gWindow);
@@ -165,12 +192,18 @@ void freeTexture(struct LTexture *this) {
         this->h = 0;
     }
 }
+
+void setColor(Uint8 r, Uint8 g, Uint8 b, struct LTexture *this) {
+    SDL_SetTextureColorMod(this->texture, r, g, b);
+}
+
 LTexture* newTexture() {
     LTexture *lt = malloc(sizeof(LTexture));
     lt->texture = NULL;
     lt->w = 0;
     lt->h = 0;
     lt->loadTexture = loadTexture;
+    lt->setColor = setColor;
     lt->render = renderTexture;
     lt->free = freeTexture;
     return lt;
