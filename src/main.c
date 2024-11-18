@@ -116,6 +116,7 @@ int main(int argc, char *argv[]) {
         gBackground.render(0, 0, NULL, &gBackground);
 
         SDL_Rect *currentClip = &gAnimeClips[frame / 4];
+        gAnimeSprite.setAlpha(a, &gAnimeSprite);
         gAnimeSprite.render(120, 195, currentClip, &gAnimeSprite);
 
         SDL_RenderPresent(gRenderer);
