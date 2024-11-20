@@ -1,40 +1,32 @@
-#include "SDL_blendmode.h"
-#include "SDL_error.h"
-#include "SDL_events.h"
-#include "SDL_image.h"
-#include "SDL_pixels.h"
-#include "SDL_rect.h"
-#include "SDL_render.h"
-#include "SDL_stdinc.h"
-#include "SDL_surface.h"
-#include "SDL_video.h"
-#include <stdbool.h>
-#include <stdio.h>
 #include <SDL.h>
-#include <stdlib.h>
-#include <string.h>
+#include <SDL_image.h>
+#include <cstdlib>
+#include <string>
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
-const int MAX_RESOURCE_PATH = 40;
 
-typedef struct LTexture{
-    SDL_Texture* texture;
-    int w;
-    int h;
+class LTexture{
+    public:
+        LTexture();
+        ~LTexture();
 
-    bool (*loadTexture)(char* path, struct LTexture *this);
-    void (*setColor)(Uint8 r, Uint8 g, Uint8 b, struct LTexture *this);
-    void (*setBlendMode)(SDL_BlendMode mode, struct LTexture *this);
-    void (*setAlpha)(Uint8 a, struct LTexture* this);
-    void (*render)(int x, int y, SDL_Rect* clip, struct LTexture *this);
-    void (*free)(struct LTexture *this);
-} LTexture;
+        int mWidth;
+        int mHeight;
+
+        bool loadTexture(std::string path);
+        void setColor(Uint8 r, Uint8 g, Uint8 b);
+        void setBlendMode(SDL_BlendMode mode);
+        void setAlpha(Uint8 a);
+        void render(int x, int y, SDL_Rect* clip = NULL);
+        void freeTexture();
+    private:
+        SDL_Texture* mTexture;
+};
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 SDL_Event e;
-LTexture* newTexture();
 
 LTexture gBackground;
 //anime
@@ -112,12 +104,12 @@ int main(int argc, char *argv[]) {
         SDL_SetRenderDrawColor(gRenderer, 1, 1, 1, 1);
         SDL_RenderClear(gRenderer);
 
-        gBackground.setColor(r, g, b, &gBackground);
-        gBackground.render(0, 0, NULL, &gBackground);
+        gBackground.setColor(r, g, b);
+        gBackground.render(0, 0, NULL);
 
         SDL_Rect *currentClip = &gAnimeClips[frame / 4];
-        gAnimeSprite.setAlpha(a, &gAnimeSprite);
-        gAnimeSprite.render(120, 195, currentClip, &gAnimeSprite);
+        gAnimeSprite.setAlpha(a);
+        gAnimeSprite.render(120, 195, currentClip);
 
         SDL_RenderPresent(gRenderer);
 
@@ -157,8 +149,7 @@ bool init() {
 
 // load texture into gTexture
 bool loadMedia() {
-    gAnimeSprite = *newTexture();
-    if (!gAnimeSprite.loadTexture("resources/anime.png", &gAnimeSprite)) {
+    if (!gAnimeSprite.loadTexture("resources/anime.png")) {
         printf("Failed to load foo!\n%s\n", IMG_GetError());
         return false;
     }
@@ -169,20 +160,19 @@ bool loadMedia() {
         gAnimeClips[i].h = 205;
     }
 
-    gBackground = *newTexture();
-    if (!gBackground.loadTexture("resources/background.png", &gBackground)) {
+    if (!gBackground.loadTexture("resources/background.png")) {
         printf("Failed to load background!\n%s\n", IMG_GetError());
         return false;
     }
 
-    gAnimeSprite.setBlendMode(SDL_BLENDMODE_BLEND, &gAnimeSprite);
+    gAnimeSprite.setBlendMode(SDL_BLENDMODE_BLEND);
 
     return true;
 }
 
 void close() {
-    gAnimeSprite.free(&gAnimeSprite);
-    gBackground.free(&gBackground);
+    gAnimeSprite.freeTexture();
+    gBackground.freeTexture();
 
     SDL_DestroyRenderer(gRenderer);
     gRenderer = NULL;
@@ -194,11 +184,11 @@ void close() {
 }
 
 //LTexture
-bool loadTexture(char *path, LTexture *this) {
+bool LTexture::loadTexture(std::string path) {
     // Load image at path
-    SDL_Surface* loadedSurface = IMG_Load(path);
+    SDL_Surface* loadedSurface = IMG_Load(path.c_str());
     if (loadedSurface == NULL) {
-        printf("Failed to load surface from %s!\nSDL_image Error: %s\n", path, IMG_GetError());
+        printf("Failed to load surface from %s!\nSDL_image Error: %s\n", path.c_str(), IMG_GetError());
         return false;
     }
 
@@ -206,58 +196,55 @@ bool loadTexture(char *path, LTexture *this) {
     SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface -> format, 0, 255, 255));
 
     // Creating texture from surface pixels
-    this->texture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
-    if (this->texture == NULL) {
-        printf("Unable to create texture from %s!\nSDL_image Error: %s\n", path, IMG_GetError());
+    mTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+    if (mTexture == NULL) {
+        printf("Unable to create texture from %s!\nSDL_image Error: %s\n", path.c_str(), IMG_GetError());
         return false;
     }
-    this->w = loadedSurface->w;
-    this->h = loadedSurface->h;
+    mWidth = loadedSurface->w;
+    mHeight = loadedSurface->h;
     SDL_FreeSurface(loadedSurface);
     return true;
 }
 
-void renderTexture(int x, int y, SDL_Rect* clip, struct LTexture *this) {
-    SDL_Rect renderQuad = {x, y, this->w, this->h};
+void LTexture::render(int x, int y, SDL_Rect* clip) {
+    SDL_Rect renderQuad = {x, y, mWidth, mHeight};
     if (clip != NULL) {
         renderQuad.w = clip->w;
         renderQuad.h = clip->h;
     }
-    SDL_RenderCopy(gRenderer, this->texture, clip, &renderQuad);
+    SDL_RenderCopy(gRenderer, mTexture, clip, &renderQuad);
 }
 
-void freeTexture(struct LTexture *this) {
-    if (this->texture != NULL) {
-        SDL_DestroyTexture(this->texture);
-        this->texture = NULL;
-        this->w = 0;
-        this->h = 0;
+void LTexture::freeTexture() {
+    if (mTexture != NULL) {
+        SDL_DestroyTexture(mTexture);
+        mTexture = NULL;
+        mWidth = 0;
+        mHeight = 0;
     }
+    free(mTexture);
 }
 
-void setColor(Uint8 r, Uint8 g, Uint8 b, struct LTexture *this) {
-    SDL_SetTextureColorMod(this->texture, r, g, b);
+void LTexture::setColor(Uint8 r, Uint8 g, Uint8 b) {
+    SDL_SetTextureColorMod(mTexture, r, g, b);
 }
 
-void setBlendMode(SDL_BlendMode blendMode, LTexture *this) {
-    SDL_SetTextureBlendMode(this->texture, blendMode);
+void LTexture::setBlendMode(SDL_BlendMode blendMode) {
+    SDL_SetTextureBlendMode(mTexture, blendMode);
 }
 
-void setAlpha(Uint8 a, LTexture *this) {
-    SDL_SetTextureAlphaMod(this->texture, a);
+void LTexture::setAlpha(Uint8 a) {
+    SDL_SetTextureAlphaMod(mTexture, a);
 }
 
-LTexture* newTexture() {
-    LTexture *lt = malloc(sizeof(LTexture));
-    lt->texture = NULL;
-    lt->w = 0;
-    lt->h = 0;
-    lt->loadTexture = loadTexture;
-    lt->setColor = setColor;
-    lt->setBlendMode = setBlendMode;
-    lt->setAlpha = setAlpha;
-    lt->render = renderTexture;
-    lt->free = freeTexture;
-    return lt;
+LTexture::LTexture() {
+    mTexture = NULL;
+    mWidth = 0;
+    mHeight = 0;
+}
+
+LTexture::~LTexture() {
+    free(mTexture);
 }
 //LTexture
