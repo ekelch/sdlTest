@@ -1,3 +1,5 @@
+#include "SDL_rect.h"
+#include "SDL_render.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <cstdlib>
@@ -18,7 +20,7 @@ class LTexture{
         void setColor(Uint8 r, Uint8 g, Uint8 b);
         void setBlendMode(SDL_BlendMode mode);
         void setAlpha(Uint8 a);
-        void render(int x, int y, SDL_Rect* clip = NULL);
+        void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
         void freeTexture();
     private:
         SDL_Texture* mTexture;
@@ -35,6 +37,8 @@ LTexture gAnimeSprite;
 SDL_Rect gAnimeClips[ANIME_NUM_FRAMES];
 int frame = 0;
 int frameBuffer = 0;
+double angle = 0.0;
+SDL_RendererFlip flipType;
 //anime
 
 //mod components
@@ -97,6 +101,21 @@ int main(int argc, char *argv[]) {
                             a -= 10;
                         }
                         break;
+                    case SDLK_z:
+                        angle += 60;
+                        break;
+                    case SDLK_x:
+                        angle -= 60;
+                        break;
+                    case SDLK_c:
+                        flipType = SDL_FLIP_NONE;
+                        break;
+                    case SDLK_v:
+                        flipType = SDL_FLIP_HORIZONTAL;
+                        break;
+                    case SDLK_b:
+                        flipType = SDL_FLIP_VERTICAL;
+                        break;
                 }
             }
         }
@@ -109,7 +128,7 @@ int main(int argc, char *argv[]) {
 
         SDL_Rect *currentClip = &gAnimeClips[frame / 4];
         gAnimeSprite.setAlpha(a);
-        gAnimeSprite.render(120, 195, currentClip);
+        gAnimeSprite.render(120, 195, currentClip, angle, NULL, flipType);
 
         SDL_RenderPresent(gRenderer);
 
@@ -207,13 +226,13 @@ bool LTexture::loadTexture(std::string path) {
     return true;
 }
 
-void LTexture::render(int x, int y, SDL_Rect* clip) {
+void LTexture::render(int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip) {
     SDL_Rect renderQuad = {x, y, mWidth, mHeight};
     if (clip != NULL) {
         renderQuad.w = clip->w;
         renderQuad.h = clip->h;
     }
-    SDL_RenderCopy(gRenderer, mTexture, clip, &renderQuad);
+    SDL_RenderCopyEx(gRenderer, mTexture, clip, &renderQuad, angle, center, flip);
 }
 
 void LTexture::freeTexture() {
