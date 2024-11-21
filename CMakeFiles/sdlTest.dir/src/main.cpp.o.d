@@ -291,36 +291,36 @@ CMakeFiles/sdlTest.dir/src/main.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/float.h \
   /Library/Developer/CommandLineTools/usr/lib/clang/15.0.0/include/float.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/float.h \
+  /opt/homebrew/include/SDL2/SDL_events.h \
+  /opt/homebrew/include/SDL2/SDL_video.h \
   /opt/homebrew/include/SDL2/SDL_pixels.h \
   /opt/homebrew/include/SDL2/SDL_endian.h \
   /opt/homebrew/include/SDL2/SDL_rect.h \
   /opt/homebrew/include/SDL2/SDL_rwops.h \
-  /opt/homebrew/include/SDL2/SDL_render.h \
-  /opt/homebrew/include/SDL2/SDL_video.h \
   /opt/homebrew/include/SDL2/SDL_surface.h \
   /opt/homebrew/include/SDL2/SDL_blendmode.h \
-  /opt/homebrew/include/SDL2/SDL.h /opt/homebrew/include/SDL2/SDL_main.h \
-  /opt/homebrew/include/SDL2/SDL_assert.h \
-  /opt/homebrew/include/SDL2/SDL_atomic.h \
-  /opt/homebrew/include/SDL2/SDL_audio.h \
-  /opt/homebrew/include/SDL2/SDL_mutex.h \
-  /opt/homebrew/include/SDL2/SDL_thread.h \
-  /opt/homebrew/include/SDL2/SDL_clipboard.h \
-  /opt/homebrew/include/SDL2/SDL_cpuinfo.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/15.0.0/include/arm_neon.h \
-  /Library/Developer/CommandLineTools/usr/lib/clang/15.0.0/include/arm_bf16.h \
-  /opt/homebrew/include/SDL2/SDL_events.h \
   /opt/homebrew/include/SDL2/SDL_keyboard.h \
   /opt/homebrew/include/SDL2/SDL_keycode.h \
   /opt/homebrew/include/SDL2/SDL_scancode.h \
   /opt/homebrew/include/SDL2/SDL_mouse.h \
   /opt/homebrew/include/SDL2/SDL_joystick.h \
   /opt/homebrew/include/SDL2/SDL_guid.h \
+  /opt/homebrew/include/SDL2/SDL_mutex.h \
   /opt/homebrew/include/SDL2/SDL_gamecontroller.h \
   /opt/homebrew/include/SDL2/SDL_sensor.h \
   /opt/homebrew/include/SDL2/SDL_quit.h \
   /opt/homebrew/include/SDL2/SDL_gesture.h \
   /opt/homebrew/include/SDL2/SDL_touch.h \
+  /opt/homebrew/include/SDL2/SDL_render.h \
+  /opt/homebrew/include/SDL2/SDL.h /opt/homebrew/include/SDL2/SDL_main.h \
+  /opt/homebrew/include/SDL2/SDL_assert.h \
+  /opt/homebrew/include/SDL2/SDL_atomic.h \
+  /opt/homebrew/include/SDL2/SDL_audio.h \
+  /opt/homebrew/include/SDL2/SDL_thread.h \
+  /opt/homebrew/include/SDL2/SDL_clipboard.h \
+  /opt/homebrew/include/SDL2/SDL_cpuinfo.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/15.0.0/include/arm_neon.h \
+  /Library/Developer/CommandLineTools/usr/lib/clang/15.0.0/include/arm_bf16.h \
   /opt/homebrew/include/SDL2/SDL_filesystem.h \
   /opt/homebrew/include/SDL2/SDL_haptic.h \
   /opt/homebrew/include/SDL2/SDL_hidapi.h \
@@ -338,6 +338,7 @@ CMakeFiles/sdlTest.dir/src/main.cpp.o: \
   /opt/homebrew/include/SDL2/SDL_misc.h \
   /opt/homebrew/include/SDL2/SDL_image.h \
   /opt/homebrew/include/SDL2/SDL_ttf.h \
+  /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/cstdio \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/cstdlib \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/string \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/__algorithm/max.h \
@@ -517,7 +518,6 @@ CMakeFiles/sdlTest.dir/src/main.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/__algorithm/find_end.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/__algorithm/search.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/__algorithm/find_first_of.h \
-  /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/cstdio \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/__string/extern_template_lists.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/__type_traits/is_allocator.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/usr/include/c++/v1/__type_traits/noexcept_move_assign_container.h \
