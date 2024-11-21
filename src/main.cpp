@@ -1,9 +1,11 @@
 #include "SDL_error.h"
 #include "SDL_events.h"
-#include "SDL_mouse.h"
+#include "SDL_keyboard.h"
 #include "SDL_pixels.h"
 #include "SDL_rect.h"
 #include "SDL_render.h"
+#include "SDL_scancode.h"
+#include "SDL_stdinc.h"
 #include "SDL_surface.h"
 #include <SDL.h>
 #include <SDL_image.h>
@@ -14,18 +16,6 @@
 
 const int SCREEN_WIDTH = 1100;
 const int SCREEN_HEIGHT = 700;
-
-const int BUTTON_HEIGHT = 200;
-const int BUTTON_WIDTH = 300;
-const int NUM_BUTTONS = 4;
-
-enum LButtonSprite {
-    BUTTON_SPRITE_MOUSE_OUT,
-    BUTTON_SPRITE_MOUSE_OVER_MOTION,
-    BUTTON_SPRITE_MOUSE_DOWN,
-    BUTTON_SPRITE_MOUSE_UP,
-    BUTTON_SPRITE_TOTAL
-};
 
 class LTexture{
     public:
@@ -49,24 +39,14 @@ class LTexture{
         SDL_Texture* mTexture;
 };
 
-class LButton {
-    public:
-        LButton();
-        void setPosition(int x, int y);
-        void handleEvent(SDL_Event* e);
-        void render();
-    private:
-        SDL_Point mPosition;
-        LButtonSprite mCurrentSprite;
-};
-
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
-TTF_Font* gFont = NULL;
 SDL_Event e;
 
 LTexture gBackground;
-LTexture gFontTexture;
+LTexture gSprites;
+SDL_Rect gSpriteClips[4];
+SDL_Rect* currentSpriteClip = NULL;
 //anime
 const int ANIME_NUM_FRAMES = 4;
 LTexture gAnimeSprite;
@@ -76,12 +56,6 @@ int frameBuffer = 0;
 double angle = 0.0;
 SDL_RendererFlip flipType;
 //anime
-
-//button
-LTexture buttonTexture;
-SDL_Rect buttonClips[NUM_BUTTONS];
-LButton gButton;
-//button
 
 //mod components
 Uint8 r = 255;
@@ -110,59 +84,6 @@ int main(int argc, char *argv[]) {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
-            gButton.handleEvent(&e);
-
-            if (e.type == SDL_KEYDOWN) {
-                switch (e.key.keysym.sym) {
-                    case SDLK_q:
-                        r += 32;
-                        break;
-                    case SDLK_w:
-                        g += 32;
-                        break;
-                    case SDLK_e:
-                        b += 32;
-                        break;
-                    case SDLK_a:
-                        r -= 32;
-                        break;
-                    case SDLK_s:
-                        g -= 32;
-                        break;
-                    case SDLK_d:
-                        b -= 32;
-                        break;
-                    case SDLK_r:
-                        if (a + 10 > 255) {
-                            a = 255;
-                        } else {
-                            a += 10;
-                        }
-                        break;
-                    case SDLK_f:
-                        if (a - 10 < 0) {
-                            a = 0;
-                        } else {
-                            a -= 10;
-                        }
-                        break;
-                    case SDLK_z:
-                        angle += 60;
-                        break;
-                    case SDLK_x:
-                        angle -= 60;
-                        break;
-                    case SDLK_c:
-                        flipType = SDL_FLIP_NONE;
-                        break;
-                    case SDLK_v:
-                        flipType = SDL_FLIP_HORIZONTAL;
-                        break;
-                    case SDLK_b:
-                        flipType = SDL_FLIP_VERTICAL;
-                        break;
-                }
-            }
         }
 
 
@@ -171,14 +92,27 @@ int main(int argc, char *argv[]) {
 
         gBackground.setColor(r, g, b);
         gBackground.render(0, 0, NULL);
-
         SDL_Rect *currentClip = &gAnimeClips[frame / 4];
         gAnimeSprite.setAlpha(a);
         gAnimeSprite.render(120, 195, currentClip, angle, NULL, flipType);
-        gFontTexture.render(177, 150);
 
-        gButton.render();
-
+        const Uint8* keyStates = SDL_GetKeyboardState(NULL);
+        if (keyStates[SDL_SCANCODE_UP]) {
+            currentSpriteClip = &gSpriteClips[0];
+        } else if (keyStates[SDL_SCANCODE_DOWN]) {
+            currentSpriteClip = &gSpriteClips[1];
+        } else if (keyStates[SDL_SCANCODE_LEFT]) {
+            currentSpriteClip = &gSpriteClips[2];
+        } else if (keyStates[SDL_SCANCODE_RIGHT]) {
+            currentSpriteClip = &gSpriteClips[3];
+        } else {
+            currentSpriteClip = NULL;
+        }
+        if (currentSpriteClip == NULL) {
+            gSprites.render(0, SCREEN_HEIGHT - 200);
+        } else {
+            gSprites.render(0, SCREEN_HEIGHT - 100, currentSpriteClip);
+        }
         SDL_RenderPresent(gRenderer);
 
 
@@ -238,28 +172,15 @@ bool loadMedia() {
         printf("Failed to load background!\n%s\n", IMG_GetError());
         return false;
     }
-
-    if (!buttonTexture.loadTexture("resources/button.png")) {
-        printf("Failed to load button texture\n%s\n", IMG_GetError());
+    if (!gSprites.loadTexture("resources/sprites.png")) {
+        printf("Failed to load sprite!\n%s\n", IMG_GetError());
         return false;
     }
-    for (int i = 0; i < NUM_BUTTONS; i++) {
-        buttonClips[i].x = 0;
-        buttonClips[i].y = BUTTON_HEIGHT * i;
-        buttonClips[i].w = BUTTON_WIDTH;
-        buttonClips[i].h = BUTTON_HEIGHT;
-    }
-    gButton.setPosition(0, SCREEN_HEIGHT - BUTTON_HEIGHT);
-
-    gFont = TTF_OpenFont("resources/lazy.ttf", 28);
-    if (gFont == NULL) {
-        printf("Failed to load lazy.ttf!\n%s\n", TTF_GetError());
-        return false;
-    }
-    SDL_Color textColor = {244, 244, 244};
-    if (!gFontTexture.loadFromRenderedText("The quick brown dog jumped over the lazy fox!", textColor)) {
-        printf("Failed to render text!\n%s\n", TTF_GetError());
-        return false;
+    for (int i = 0; i < 4; i++) {
+        gSpriteClips[i].x = i % 2 * 100;
+        gSpriteClips[i].y = i / 2 * 100;
+        gSpriteClips[i].w = 100;
+        gSpriteClips[i].h = 100;
     }
 
     return true;
@@ -268,8 +189,6 @@ bool loadMedia() {
 void close() {
     gAnimeSprite.freeTexture();
     gBackground.freeTexture();
-    TTF_CloseFont(gFont);
-    gFont = NULL;
 
     SDL_DestroyRenderer(gRenderer);
     gRenderer = NULL;
@@ -303,26 +222,6 @@ bool LTexture::loadTexture(std::string path) {
     SDL_FreeSurface(loadedSurface);
     return true;
 }
-
-#if defined (SDL_TTF_MAJOR_VERSION)
-bool LTexture::loadFromRenderedText(std::string text, SDL_Color color) {
-    free(mTexture);
-    SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, text.c_str(), color);
-    if (textSurface == NULL) {
-        printf("Unable to create font surface!\nTTF_ERROR: %s\n", TTF_GetError());
-        return false;
-    }
-    mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
-    if (mTexture == NULL) {
-        printf("Unable to create texture from surface\nTTF_ERROR: %s\n", SDL_GetError());
-        return false;
-    }
-    mWidth = textSurface->w;
-    mHeight = textSurface->h;
-    SDL_FreeSurface(textSurface);
-    return true;
-};
-#endif
 
 void LTexture::render(int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip) {
     SDL_Rect renderQuad = {x, y, mWidth, mHeight};
@@ -365,48 +264,3 @@ LTexture::~LTexture() {
     free(mTexture);
 }
 //end LTexture
-
-//LButton
-
-LButton::LButton() {
-    mPosition.x = 0;
-    mPosition.y = 0;
-    mCurrentSprite = BUTTON_SPRITE_MOUSE_OUT;
-};
-
-void LButton::setPosition(int x, int y) {
-    mPosition.x = x;
-    mPosition.y = y;
-};
-
-void LButton::handleEvent(SDL_Event* e) {
-    if (e->type == SDL_MOUSEMOTION || e->type == SDL_MOUSEBUTTONDOWN || e->type == SDL_MOUSEBUTTONUP) {
-        int x,y;
-        SDL_GetMouseState(&x, &y);
-        bool inside = false;
-        if (x > mPosition.x && x < mPosition.x + BUTTON_WIDTH && y > mPosition.y && y < mPosition.y + BUTTON_HEIGHT) {
-            inside = true;
-        }
-        if (!inside) {
-            mCurrentSprite = BUTTON_SPRITE_MOUSE_OUT;
-        } else {
-            switch (e->type) {
-                case SDL_MOUSEMOTION:
-                    mCurrentSprite = BUTTON_SPRITE_MOUSE_OVER_MOTION;
-                    break;
-                case SDL_MOUSEBUTTONDOWN:
-                    mCurrentSprite = BUTTON_SPRITE_MOUSE_DOWN;
-                    break;
-                case SDL_MOUSEBUTTONUP:
-                    mCurrentSprite = BUTTON_SPRITE_MOUSE_UP;
-                    break;
-            }
-        }
-    }
-};
-
-void LButton::render() {
-    buttonTexture.render(mPosition.x, mPosition.y, &buttonClips[mCurrentSprite]);
-};
-
-//end Lbutton
