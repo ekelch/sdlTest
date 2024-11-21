@@ -840,6 +840,7 @@ CMakeFiles/sdlTest.dir/src/main.cpp.o: src/main.cpp \
   /opt/homebrew/include/SDL2/SDL_thread.h \
   /opt/homebrew/include/SDL2/SDL_timer.h \
   /opt/homebrew/include/SDL2/SDL_touch.h \
+  /opt/homebrew/include/SDL2/SDL_ttf.h \
   /opt/homebrew/include/SDL2/SDL_version.h \
   /opt/homebrew/include/SDL2/SDL_video.h \
   /opt/homebrew/include/SDL2/begin_code.h \
@@ -849,6 +850,8 @@ CMakeFiles/sdlTest.dir/src/main.cpp.o: src/main.cpp \
 /opt/homebrew/include/SDL2/close_code.h:
 
 /opt/homebrew/include/SDL2/SDL_version.h:
+
+/opt/homebrew/include/SDL2/SDL_ttf.h:
 
 /opt/homebrew/include/SDL2/SDL_timer.h:
 

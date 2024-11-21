@@ -1,7 +1,11 @@
+#include "SDL_error.h"
+#include "SDL_pixels.h"
 #include "SDL_rect.h"
 #include "SDL_render.h"
+#include "SDL_surface.h"
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <cstdlib>
 #include <string>
 
@@ -17,6 +21,7 @@ class LTexture{
         int mHeight;
 
         bool loadTexture(std::string path);
+        bool loadFromRenderedText(std::string text, SDL_Color color);
         void setColor(Uint8 r, Uint8 g, Uint8 b);
         void setBlendMode(SDL_BlendMode mode);
         void setAlpha(Uint8 a);
@@ -28,9 +33,11 @@ class LTexture{
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
+TTF_Font* gFont = NULL;
 SDL_Event e;
 
 LTexture gBackground;
+LTexture gFontTexture;
 //anime
 const int ANIME_NUM_FRAMES = 4;
 LTexture gAnimeSprite;
@@ -129,8 +136,10 @@ int main(int argc, char *argv[]) {
         SDL_Rect *currentClip = &gAnimeClips[frame / 4];
         gAnimeSprite.setAlpha(a);
         gAnimeSprite.render(120, 195, currentClip, angle, NULL, flipType);
+        gFontTexture.render(177, 150);
 
         SDL_RenderPresent(gRenderer);
+
 
         //Go to next frame
         if (++frameBuffer % 3 == 0) {
@@ -163,6 +172,10 @@ bool init() {
         printf("SDL Image could not be initialized!\nSDL_image Error: %s\n", IMG_GetError());
         return false;
     }
+    if (TTF_Init() == -1) {
+        printf("SDL TTF could not be initialized!\nTTF_ERROR: %s\n", TTF_GetError());
+        return false;
+    }
     return true;
 }
 
@@ -172,6 +185,7 @@ bool loadMedia() {
         printf("Failed to load foo!\n%s\n", IMG_GetError());
         return false;
     }
+    gAnimeSprite.setBlendMode(SDL_BLENDMODE_BLEND);
     for (int i = 0; i < ANIME_NUM_FRAMES; i++) {
         gAnimeClips[i].x = 64 * i;
         gAnimeClips[i].y = 0;
@@ -184,7 +198,16 @@ bool loadMedia() {
         return false;
     }
 
-    gAnimeSprite.setBlendMode(SDL_BLENDMODE_BLEND);
+    gFont = TTF_OpenFont("resources/lazy.ttf", 28);
+    if (gFont == NULL) {
+        printf("Failed to load lazy.ttf!\n%s\n", TTF_GetError());
+        return false;
+    }
+    SDL_Color textColor = {244, 244, 244};
+    if (!gFontTexture.loadFromRenderedText("The quick brown dog jumped over the lazy fox!", textColor)) {
+        printf("Failed to render text!\n%s\n", TTF_GetError());
+        return false;
+    }
 
     return true;
 }
@@ -192,12 +215,15 @@ bool loadMedia() {
 void close() {
     gAnimeSprite.freeTexture();
     gBackground.freeTexture();
+    TTF_CloseFont(gFont);
+    gFont = NULL;
 
     SDL_DestroyRenderer(gRenderer);
     gRenderer = NULL;
     SDL_DestroyWindow(gWindow);
     gWindow = NULL;
 
+    TTF_Quit();
     IMG_Quit();
     SDL_Quit();
 }
@@ -211,7 +237,6 @@ bool LTexture::loadTexture(std::string path) {
         return false;
     }
 
-    // surface to key, enable keying, pixel to key with (cyan//mapRGB is cross platform compatible), loaded surface has format var
     SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface -> format, 0, 255, 255));
 
     // Creating texture from surface pixels
@@ -225,6 +250,25 @@ bool LTexture::loadTexture(std::string path) {
     SDL_FreeSurface(loadedSurface);
     return true;
 }
+
+bool LTexture::loadFromRenderedText(std::string text, SDL_Color color) {
+    free(mTexture);
+    SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, text.c_str(), color);
+    if (textSurface == NULL) {
+        printf("Unable to create font surface!\nTTF_ERROR: %s\n", TTF_GetError());
+        return false;
+    }
+    mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+    if (mTexture == NULL) {
+        printf("Unable to create texture from surface\nTTF_ERROR: %s\n", SDL_GetError());
+        return false;
+    }
+    mWidth = textSurface->w;
+    mHeight = textSurface->h;
+    SDL_FreeSurface(textSurface);
+    return true;
+};
+
 
 void LTexture::render(int x, int y, SDL_Rect* clip, double angle, SDL_Point* center, SDL_RendererFlip flip) {
     SDL_Rect renderQuad = {x, y, mWidth, mHeight};
