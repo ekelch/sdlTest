@@ -1,6 +1,7 @@
 #include "SDL_error.h"
 #include "SDL_events.h"
 #include "SDL_keyboard.h"
+#include "SDL_keycode.h"
 #include "SDL_pixels.h"
 #include "SDL_rect.h"
 #include "SDL_render.h"
@@ -10,6 +11,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include <SDL_mixer.h>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -53,15 +55,9 @@ LTexture gAnimeSprite;
 SDL_Rect gAnimeClips[ANIME_NUM_FRAMES];
 int frame = 0;
 int frameBuffer = 0;
-double angle = 0.0;
-SDL_RendererFlip flipType;
 //anime
 
-//mod components
-Uint8 r = 255;
-Uint8 g = 255;
-Uint8 b = 255;
-Uint8 a = 255;
+Mix_Music* gMusic = NULL;
 
 bool init();
 bool loadMedia();
@@ -84,17 +80,18 @@ int main(int argc, char *argv[]) {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
+            if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
+                if (Mix_PlayingMusic() == 0) {
+                    Mix_PlayMusic(gMusic, 0);
+                } else {
+                    if (Mix_PausedMusic() == 1) {
+                        Mix_ResumeMusic();
+                    } else {
+                        Mix_PauseMusic();
+                    }
+                }
+            }
         }
-
-
-        SDL_SetRenderDrawColor(gRenderer, 1, 1, 1, 1);
-        SDL_RenderClear(gRenderer);
-
-        gBackground.setColor(r, g, b);
-        gBackground.render(0, 0, NULL);
-        SDL_Rect *currentClip = &gAnimeClips[frame / 4];
-        gAnimeSprite.setAlpha(a);
-        gAnimeSprite.render(120, 195, currentClip, angle, NULL, flipType);
 
         const Uint8* keyStates = SDL_GetKeyboardState(NULL);
         if (keyStates[SDL_SCANCODE_UP]) {
@@ -105,9 +102,15 @@ int main(int argc, char *argv[]) {
             currentSpriteClip = &gSpriteClips[2];
         } else if (keyStates[SDL_SCANCODE_RIGHT]) {
             currentSpriteClip = &gSpriteClips[3];
-        } else {
-            currentSpriteClip = NULL;
         }
+
+        SDL_SetRenderDrawColor(gRenderer, 1, 1, 1, 1);
+        SDL_RenderClear(gRenderer);
+
+        gBackground.render(0, 0, NULL);
+        SDL_Rect *currentClip = &gAnimeClips[frame / 4];
+        gAnimeSprite.render(120, 195, currentClip);
+
         if (currentSpriteClip == NULL) {
             gSprites.render(0, SCREEN_HEIGHT - 200);
         } else {
@@ -132,6 +135,10 @@ int main(int argc, char *argv[]) {
 }
 
 bool init() {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
+        printf( "SDL could not initialize! SDL Error: %s\n", SDL_GetError() );
+        return false;
+    }
     gWindow = SDL_CreateWindow("Hello World :3", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (gWindow == NULL) {
         printf("Failed to create window!\nSDL_Error: %s\n", SDL_GetError());
@@ -147,8 +154,8 @@ bool init() {
         printf("SDL Image could not be initialized!\nSDL_image Error: %s\n", IMG_GetError());
         return false;
     }
-    if (TTF_Init() == -1) {
-        printf("SDL TTF could not be initialized!\nTTF_ERROR: %s\n", TTF_GetError());
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        printf("SDL mixer could not be initialized!\nMIXERROR: %s\n", Mix_GetError());
         return false;
     }
     return true;
@@ -183,6 +190,12 @@ bool loadMedia() {
         gSpriteClips[i].h = 100;
     }
 
+    gMusic = Mix_LoadMUS("resources/mice.mp3");
+    if (gMusic == NULL) {
+        printf("Failed to load mice!\n%s\n", Mix_GetError());
+        return false;
+    }
+
     return true;
 }
 
@@ -195,7 +208,10 @@ void close() {
     SDL_DestroyWindow(gWindow);
     gWindow = NULL;
 
-    TTF_Quit();
+    Mix_FreeMusic(gMusic);
+    gMusic = NULL;
+
+    Mix_Quit();
     IMG_Quit();
     SDL_Quit();
 }

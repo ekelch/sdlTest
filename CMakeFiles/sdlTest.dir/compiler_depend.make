@@ -822,6 +822,7 @@ CMakeFiles/sdlTest.dir/src/main.cpp.o: src/main.cpp \
   /opt/homebrew/include/SDL2/SDL_messagebox.h \
   /opt/homebrew/include/SDL2/SDL_metal.h \
   /opt/homebrew/include/SDL2/SDL_misc.h \
+  /opt/homebrew/include/SDL2/SDL_mixer.h \
   /opt/homebrew/include/SDL2/SDL_mouse.h \
   /opt/homebrew/include/SDL2/SDL_mutex.h \
   /opt/homebrew/include/SDL2/SDL_pixels.h \
@@ -872,6 +873,8 @@ CMakeFiles/sdlTest.dir/src/main.cpp.o: src/main.cpp \
 /opt/homebrew/include/SDL2/SDL_quit.h:
 
 /opt/homebrew/include/SDL2/SDL_power.h:
+
+/opt/homebrew/include/SDL2/SDL_mixer.h:
 
 /opt/homebrew/include/SDL2/SDL_misc.h:
 
