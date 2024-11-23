@@ -43,6 +43,24 @@ class LTexture{
         SDL_Texture* mTexture;
 };
 
+class LTimer {
+    public:
+        LTimer();
+        void toggleStart();
+        void togglePause();
+
+        Uint64 getTicks();
+
+        bool isStarted();
+        bool isPaused();
+
+    private:
+        Uint64 mStartTick;
+        Uint64 mPauseTick;
+        bool mPaused;
+        bool mStarted;
+};
+
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 SDL_Event e;
@@ -65,6 +83,7 @@ Uint64 starttime = 0;
 std::stringstream timeText;
 TTF_Font* gFont;
 SDL_Color fontColor = {0,0,0,255};
+LTimer lTimer;
 
 Mix_Music* gMusic = NULL;
 
@@ -89,19 +108,28 @@ int main(int argc, char *argv[]) {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
-            if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_SPACE) {
-                if (Mix_PlayingMusic() == 0) {
-                    Mix_PlayMusic(gMusic, 0);
-                } else {
-                    if (Mix_PausedMusic() == 1) {
-                        Mix_ResumeMusic();
-                    } else {
-                        Mix_PauseMusic();
-                    }
+            if (e.type == SDL_KEYDOWN) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_SPACE:
+                        if (Mix_PlayingMusic() == 0) {
+                            Mix_PlayMusic(gMusic, 0);
+                        } else {
+                            if (Mix_PausedMusic() == 1) {
+                                Mix_ResumeMusic();
+                            } else {
+                                Mix_PauseMusic();
+                            }
+                        }
+                        break;
+                    case SDLK_s:
+                        lTimer.toggleStart();
+                        break;
+                    case SDLK_p:
+                        lTimer.togglePause();
+                        break;
                 }
-            } else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN) {
-                starttime = SDL_GetTicks64();
             }
+
         }
 
         const Uint8* keyStates = SDL_GetKeyboardState(NULL);
@@ -129,11 +157,11 @@ int main(int argc, char *argv[]) {
         }
 
         timeText.str("");
-        timeText << SDL_GetTicks64() - starttime;
+        timeText << lTimer.getTicks() / 1000.0f;
         if (!gFontTexture.loadFromRenderedText(timeText.str().c_str(), fontColor)) {
             printf("Failed to load text");
         }
-        gFontTexture.render(100, 100);
+        gFontTexture.render(400, 120);
 
         SDL_RenderPresent(gRenderer);
 
@@ -344,3 +372,56 @@ bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColo
 }
 #endif
 //end LTexture
+
+LTimer::LTimer() {
+    mStartTick = 0;
+    mPauseTick = 0;
+    mStarted = false;
+    mPaused = false;
+}
+
+void LTimer::toggleStart() {
+    if (mStarted) {
+        mStarted = false;
+        mPaused = false;
+        mStartTick = 0;
+        mPauseTick = 0;
+    } else {
+        mStarted = true;
+        mPaused = false;
+        mStartTick = SDL_GetTicks64();
+        mPauseTick = 0;
+    }
+}
+
+void LTimer::togglePause() {
+    if (mStarted) {
+        if (mPaused) {
+            mPaused = false;
+            mStartTick = SDL_GetTicks64() - mPauseTick;
+        } else {
+            mPaused = true;
+            mPauseTick = SDL_GetTicks64() - mStartTick;
+        }
+    }
+}
+
+Uint64 LTimer::getTicks() {
+    if (mStarted) {
+        if (mPaused) {
+            return mPauseTick;
+        } else {
+            return SDL_GetTicks() - mStartTick;
+        }
+    } else {
+        return 0;
+    }
+}
+
+bool LTimer::isStarted() {
+    return mStarted;
+}
+
+bool LTimer::isPaused() {
+    return mStarted && mPaused;
+}
