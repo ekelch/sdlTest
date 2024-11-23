@@ -20,6 +20,8 @@
 
 const int SCREEN_WIDTH = 1100;
 const int SCREEN_HEIGHT = 700;
+const int MAX_FPS = 60;
+const int TICKS_PER_FRAME = 1000 / MAX_FPS;
 
 class LTexture{
     public:
@@ -46,6 +48,8 @@ class LTexture{
 class LTimer {
     public:
         LTimer();
+        void start();
+        void stop();
         void toggleStart();
         void togglePause();
 
@@ -76,14 +80,14 @@ const int ANIME_NUM_FRAMES = 4;
 LTexture gAnimeSprite;
 SDL_Rect gAnimeClips[ANIME_NUM_FRAMES];
 int frame = 0;
-int frameBuffer = 0;
 //anime
 
 Uint64 starttime = 0;
 std::stringstream timeText;
 TTF_Font* gFont;
-SDL_Color fontColor = {0,0,0,255};
-LTimer lTimer;
+SDL_Color fontColor = {255,255,255,255};
+LTimer fpsTimer;
+LTimer capTimer;
 
 Mix_Music* gMusic = NULL;
 
@@ -93,6 +97,8 @@ void close();
 
 int main(int argc, char *argv[]) {
     bool quit = false;
+    int countedFrames = 0;
+    fpsTimer.start();
 
     if (!init()) {
         printf("Failed to init");
@@ -103,7 +109,8 @@ int main(int argc, char *argv[]) {
         return 0;
     }
     while (!quit) {
-        // 0 -> nothing in queue
+        capTimer.start();
+
         while (SDL_PollEvent(&e) != 0) {
             if (e.type == SDL_QUIT) {
                 quit = true;
@@ -120,12 +127,6 @@ int main(int argc, char *argv[]) {
                                 Mix_PauseMusic();
                             }
                         }
-                        break;
-                    case SDLK_s:
-                        lTimer.toggleStart();
-                        break;
-                    case SDLK_p:
-                        lTimer.togglePause();
                         break;
                 }
             }
@@ -156,25 +157,31 @@ int main(int argc, char *argv[]) {
             gSprites.render(0, SCREEN_HEIGHT - 100, currentSpriteClip);
         }
 
+        Uint64 avgFps = countedFrames / (fpsTimer.getTicks() / 1000.f);
+        Uint64 instantFps = countedFrames / (fpsTimer.getTicks());
+        if (avgFps > 2000000) {
+            avgFps = 0;
+        }
         timeText.str("");
-        timeText << lTimer.getTicks() / 1000.0f;
-        if (!gFontTexture.loadFromRenderedText(timeText.str().c_str(), fontColor)) {
+        timeText << avgFps << " FPS";
+        if (!gFontTexture.loadFromRenderedText(timeText.str(), fontColor)) {
             printf("Failed to load text");
         }
-        gFontTexture.render(400, 120);
+        gFontTexture.render(SCREEN_WIDTH - gFontTexture.mWidth, 0);
 
         SDL_RenderPresent(gRenderer);
 
-
-        //Go to next frame
-        if (++frameBuffer % 3 == 0) {
-            frameBuffer = 0;
-            ++frame;
-        }
-
+        countedFrames++;
+        frame++;
         //Cycle animation
         if(frame / ANIME_NUM_FRAMES >= ANIME_NUM_FRAMES) {
             frame = 0;
+        }
+
+        // delay next render until ticks per frmae limit hit
+        const int frameTicks = capTimer.getTicks();
+        if (frameTicks < TICKS_PER_FRAME) {
+            SDL_Delay(TICKS_PER_FRAME - frameTicks);
         }
     }
 
@@ -191,7 +198,7 @@ bool init() {
         printf("Failed to create window!\nSDL_Error: %s\n", SDL_GetError());
         return false;
     }
-    gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED |  SDL_RENDERER_PRESENTVSYNC);
+    gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
     if (gRenderer == NULL) {
         printf("Failed to create renderer!\nSDL_Error: %s\n", SDL_GetError());
         return false;
@@ -378,6 +385,20 @@ LTimer::LTimer() {
     mPauseTick = 0;
     mStarted = false;
     mPaused = false;
+}
+
+void LTimer::start() {
+    mStarted = true;
+    mPaused = false;
+    mStartTick = SDL_GetTicks64();
+    mPauseTick = 0;
+}
+
+void LTimer::stop() {
+    mStarted = false;
+    mPaused = false;
+    mStartTick = 0;
+    mPauseTick = 0;
 }
 
 void LTimer::toggleStart() {
