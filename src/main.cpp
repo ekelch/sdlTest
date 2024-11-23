@@ -8,12 +8,14 @@
 #include "SDL_scancode.h"
 #include "SDL_stdinc.h"
 #include "SDL_surface.h"
+#include "SDL_timer.h"
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
 #include <cstdio>
 #include <cstdlib>
+#include <sstream>
 #include <string>
 
 const int SCREEN_WIDTH = 1100;
@@ -47,6 +49,8 @@ SDL_Event e;
 
 LTexture gBackground;
 LTexture gSprites;
+LTexture gFontTexture;
+
 SDL_Rect gSpriteClips[4];
 SDL_Rect* currentSpriteClip = NULL;
 //anime
@@ -56,6 +60,11 @@ SDL_Rect gAnimeClips[ANIME_NUM_FRAMES];
 int frame = 0;
 int frameBuffer = 0;
 //anime
+
+Uint64 starttime = 0;
+std::stringstream timeText;
+TTF_Font* gFont;
+SDL_Color fontColor = {0,0,0,255};
 
 Mix_Music* gMusic = NULL;
 
@@ -90,6 +99,8 @@ int main(int argc, char *argv[]) {
                         Mix_PauseMusic();
                     }
                 }
+            } else if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_RETURN) {
+                starttime = SDL_GetTicks64();
             }
         }
 
@@ -116,6 +127,14 @@ int main(int argc, char *argv[]) {
         } else {
             gSprites.render(0, SCREEN_HEIGHT - 100, currentSpriteClip);
         }
+
+        timeText.str("");
+        timeText << SDL_GetTicks64() - starttime;
+        if (!gFontTexture.loadFromRenderedText(timeText.str().c_str(), fontColor)) {
+            printf("Failed to load text");
+        }
+        gFontTexture.render(100, 100);
+
         SDL_RenderPresent(gRenderer);
 
 
@@ -154,6 +173,7 @@ bool init() {
         printf("SDL Image could not be initialized!\nSDL_image Error: %s\n", IMG_GetError());
         return false;
     }
+    TTF_Init();
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         printf("SDL mixer could not be initialized!\nMIXERROR: %s\n", Mix_GetError());
         return false;
@@ -173,6 +193,16 @@ bool loadMedia() {
         gAnimeClips[i].y = 0;
         gAnimeClips[i].w = 64 ;
         gAnimeClips[i].h = 205;
+    }
+
+    gFont = TTF_OpenFont("resources/lazy.ttf", 20);
+    if (gFont == NULL) {
+        printf("Failed to load lazy text!\n%s\n", TTF_GetError());
+        return false;
+    }
+    if (!gFontTexture.loadFromRenderedText("I'm so fucking gay", fontColor)) {
+        printf("Failed load font texture\n%s\n", TTF_GetError());
+        return false;
     }
 
     if (!gBackground.loadTexture("resources/background.png")) {
@@ -279,4 +309,38 @@ LTexture::LTexture() {
 LTexture::~LTexture() {
     free(mTexture);
 }
+
+#if defined(SDL_TTF_MAJOR_VERSION)
+bool LTexture::loadFromRenderedText( std::string textureText, SDL_Color textColor )
+{
+	//Render text surface
+	SDL_Surface* textSurface = TTF_RenderText_Solid( gFont, textureText.c_str(), textColor );
+	if( textSurface != NULL )
+	{
+		//Create texture from surface pixels
+        mTexture = SDL_CreateTextureFromSurface( gRenderer, textSurface );
+		if( mTexture == NULL )
+		{
+			printf( "Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError() );
+		}
+		else
+		{
+			//Get image dimensions
+			mWidth = textSurface->w;
+			mHeight = textSurface->h;
+		}
+
+		//Get rid of old surface
+		SDL_FreeSurface( textSurface );
+	}
+	else
+	{
+		printf( "Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError() );
+	}
+
+
+	//Return success
+	return mTexture != NULL;
+}
+#endif
 //end LTexture
