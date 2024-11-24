@@ -52,11 +52,12 @@ class Dot {
         Dot();
 
         void handleEvent(SDL_Event& e);
-        void move();
+        void move(SDL_Rect& other);
         void render();
     private:
         int mPosX, mPosY;
         int mVelX, mVelY;
+        SDL_Rect mCollider;
 };
 
 class LTimer {
@@ -89,10 +90,13 @@ bool init();
 bool loadMedia();
 void close();
 
+bool checkCollide(SDL_Rect a, SDL_Rect b);
+
 int main(int argc, char *argv[]) {
     SDL_Event e;
     bool quit = false;
     Dot dot;
+    SDL_Rect wall = {SCREEN_WIDTH / 2 - 25, 50, 50, 400};
 
     if (!init()) {
         printf("Failed to init");
@@ -109,9 +113,14 @@ int main(int argc, char *argv[]) {
             }
             dot.handleEvent(e);
         }
-        dot.move();
+
         SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 1);
         SDL_RenderClear(gRenderer);
+
+        SDL_SetRenderDrawColor(gRenderer, 200, 15, 23, 255);
+        SDL_RenderDrawRect(gRenderer, &wall);
+
+        dot.move(wall);
         dot.render();
         SDL_RenderPresent(gRenderer);
     }
@@ -159,6 +168,32 @@ void close() {
 
     IMG_Quit();
     SDL_Quit();
+}
+
+bool checkCollide(SDL_Rect a, SDL_Rect b) {
+    int leftA = a.x;
+    int rightA  = a.x + a.w;
+    int topA = a.y;
+    int bottomA = a.y + a.h;
+
+    int leftB = b.x;
+    int rightB = b.x + b.w;
+    int topB = b.y;
+    int bottomB = b.y + b.h;
+
+    if (rightA <= leftB) {
+        return false;
+    }
+    if (leftA >= rightB) {
+        return false;
+    }
+    if (topA >= bottomB) {
+        return false;
+    }
+    if (bottomA <= topB) {
+        return false;
+    }
+    return true;
 }
 
 //LTexture
@@ -332,6 +367,8 @@ Dot::Dot() {
     mPosY = 0;
     mVelX = 0;
     mVelY = 0;
+    mCollider.w = DOT_WIDTH;
+    mCollider.h = DOT_HEIGHT;
 }
 
 void Dot::handleEvent(SDL_Event& e) {
@@ -353,15 +390,38 @@ void Dot::handleEvent(SDL_Event& e) {
     }
 }
 
-void Dot::move() {
+void Dot::move(SDL_Rect& other) {
     int updX = mPosX + mVelX;
     int updY = mPosY + mVelY;
-    if (updX > 0 && updX < SCREEN_WIDTH) {
-        mPosX = updX;
+
+    mCollider.x = updX;
+    mCollider.y = updY;
+
+    if (checkCollide(mCollider, other)) {
+        mCollider.x = mPosX;
+        mCollider.y = mPosY;
+        return;
+    };
+
+    if (updX < 0) {
+        mPosX = 0;
+    } else if (updX + DOT_WIDTH > SCREEN_WIDTH) {
+        mPosX = SCREEN_WIDTH - DOT_WIDTH;
+    } else {
+        mPosX  = updX;
     }
-    if (updY > 0 && updY < SCREEN_HEIGHT) {
-        mPosY = updY;
+
+    if (updY < 0) {
+        mPosY = 0;
+    } else if (updY + DOT_HEIGHT > SCREEN_HEIGHT) {
+        mPosY = SCREEN_HEIGHT - DOT_HEIGHT;
+    } else {
+        mPosY  = updY;
     }
+
+    mCollider.x = mPosX;
+    mCollider.y = mPosY;
+
 }
 
 void Dot::render() {
